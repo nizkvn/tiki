@@ -4,7 +4,7 @@ import sqlite3
 
 TIKI = "https://tiki.vn/"
 
-conn = sqlite3.connect('tiki.db')
+conn = sqlite3.connect('ti_ki.db')
 cur = conn.cursor()
 
 def create_categories_table():
@@ -162,8 +162,8 @@ create_product_table()
 # delete_all('product')
 # get_main_categories(save_db=True)
 
-# a = get_main_categories()
-# for product in a:
-#     get_product(product,save_db=True)
+a = get_main_categories()
+for product in a:
+    get_product(product,save_db=True)
 
-print(select_all('categories'))
+# print(select_all('categories'))
