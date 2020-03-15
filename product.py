@@ -4,7 +4,7 @@ import sqlite3
 
 TIKI = "https://tiki.vn/"
 
-conn = sqlite3.connect('ti_ki.db')
+conn = sqlite3.connect('product.db')
 cur = conn.cursor()
 
 def create_categories_table():
@@ -28,8 +28,11 @@ def create_product_table():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name VARCHAR(255),
             url TEXT, 
-            parent_id INT,
-            product_id TEXT, 
+            img_url TEXT,
+            data_id TEXT,
+            product_id TEXT,
+            brand TEXT,
+            tiki_now VARCHAR(10),
             price TEXT,
             category TEXT,
             create_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -58,7 +61,7 @@ class Category:
         self.parent_id = parent_id
 
     def __repr__(self):
-        return "ID: {}, Name: {}, URL: {}, Parent_id: {}".format(self.cat_id, self.name, self.url, self.parent_id)
+        return "ID: {}, Name: {}, URL:{}, Parent_id: {}".format(self.cat_id, self.name, self.url, self.parent_id)
 
     def save_into_db(self):
         query = """
@@ -74,24 +77,27 @@ class Category:
             print('ERROR BY INSERT:', err)
 
 class Product:
-    def __init__(self, cat_id, name, url, parent_id, product_id, price, category_name):
-        self.cat_id = cat_id
+    def __init__(self, pro_id, name, url,img_url, data_id, product_id,brand,tiki_now, price, category_name):
+        self.pro_id = pro_id
         self.name = name
         self.url = url
-        self.parent_id = parent_id
+        self.img_url = img_url
+        self.data_id = data_id
         self.product_id = product_id
+        self.brand = brand
+        self.tiki_now = tiki_now
         self.price = price
         self.category_name = category_name
 
     def __repr__(self):
-        return "ID: {}, Name: {}, URL: {}, Parent_id: {}, Product_id: {},Price: {}, Category_name: {}".format(self.cat_id, self.name, self.url, self.parent_id, self.product_id, self.price,self.category_name)
+        return "ID: {}, Name: {}, URL: {}, Img_Url: {}, Data_Id: {}, Product_id: {}, Brand: {}, Tiki_Now: {}, Price: {},Category: {}".format(self.pro_id, self.name, self.url, self.img_url, self.data_id, self.product_id,self.brand,self.tiki_now,self.price,self.category_name)
 
     def save_into_db(self):
         query = """
-            INSERT INTO product (name, url, parent_id, product_id, price, category)
-            VALUES (?, ?, ?, ?, ?, ?);
+            INSERT INTO product (name, url,img_url, data_id, product_id, brand, tiki_now, price, category)
+            VALUES (?, ?, ?, ?, ?, ?,?,?,?);
         """
-        val = (self.name, self.url, self.parent_id, self.product_id, self.price, self.category_name)
+        val = (self.name, self.url, self.img_url, self.data_id, self.product_id,self.brand,self.tiki_now,self.price,self.category_name)
         try:
             cur.execute(query,val)
             self.cat_id = cur.lastrowid
@@ -129,21 +135,23 @@ def get_main_categories(save_db=False):
 def get_product(category, save_db=False):
     name = category.name
     url = category.url
-    parent_id = category.parent_id
     result = []
     try:
         soup = get_url(url)
-        div_containers = soup.findAll('div', {'class':'product-item'}, limit=480)
+        div_containers = soup.findAll('div', {'class':'product-item'})
         for div in div_containers:
             proid = None
             pro_name = div['data-title']
             pro_url = div.a['href']
-            pro_parent_id = parent_id
+            pro_img_url = div.img['src']
+            pro_data_id = div['data-id']
             pro_id = div['data-seller-product-id']
+            pro_brand = div['data-brand']
+            pro_tiki_now = 'Yes' if div.find('i', {'class':'icon-tikinow'}) else 'No'
             pro_price = div['data-price']
             pro_cat_name = name
             
-            pro = Product(proid,pro_name,pro_url,pro_parent_id,pro_id, pro_price,pro_cat_name)
+            pro = Product(proid,pro_name,pro_url,pro_img_url,pro_data_id,pro_id,pro_brand,pro_tiki_now, pro_price,pro_cat_name)
             if save_db:
                 pro.save_into_db()
             result.append(pro)
